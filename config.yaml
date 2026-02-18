@@ -1,0 +1,5 @@
+projects:
+  default:
+    database:
+      dsn: ""
+      user_table: users

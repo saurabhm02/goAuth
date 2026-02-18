@@ -1,6 +1,6 @@
 # goAuth
 
-JWT auth service in Go (PostgreSQL). Multi-tenant: one server, many projects; each project has its own DB. Send **`X-Project-ID`** (default: `default`) on every request.
+JWT auth service in Go with multi-project support; for now PostgreSQL only. One server, many projects; each project has its own DB. Send **`X-Project-ID`** (default: `default`) on every request.
 
 ## Setup
 
