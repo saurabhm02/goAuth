@@ -7,12 +7,18 @@ var (
 )
 
 const (
-	EnvConfigPath    = "CONFIG_PATH"
-	EnvDatabaseDSN   = "DATABASE_DSN"
-	EnvJWTSecret     = "JWT_SECRET"
-	EnvPort          = "PORT"
-	HeaderProjectID  = "X-Project-ID"
-	DefaultProjectID = "default"
+	EnvConfigPath          = "CONFIG_PATH"
+	EnvDatabaseDSN         = "DATABASE_DSN"
+	EnvDatabaseSSLRootCert = "DATABASE_SSL_ROOT_CERT"
+	EnvJWTSecret      = "JWT_SECRET"
+	EnvPort           = "PORT"
+	EnvSMTPHost       = "SMTP_HOST"
+	EnvSMTPPort       = "SMTP_PORT"
+	EnvSMTPUser       = "SMTP_USER"
+	EnvSMTPPassword   = "SMTP_PASSWORD"
+	EnvSMTPFrom       = "SMTP_FROM"
+	HeaderProjectID   = "X-Project-ID"
+	DefaultProjectID  = "default"
 )
 
 const (
@@ -25,4 +31,5 @@ const (
 	MsgInvalidToken    = "invalid or expired token"
 	MsgPasswordTooWeak = "password does not meet requirements"
 	MsgProjectNotFound = "project not found"
+	MsgInvalidOTP      = "invalid or expired OTP"
 )

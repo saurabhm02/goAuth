@@ -1,5 +1,7 @@
 package types
 
 type ProjectContext struct {
-	Repo interface{}
+	Repo    interface{}
+	OTP     bool
+	OTPRepo interface{}
 }

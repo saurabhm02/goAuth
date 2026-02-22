@@ -1,5 +1,7 @@
 projects:
   default:
     database:
-      dsn: ""
+      dsn: "${DATABASE_DSN}"
       user_table: users
+      otp_table: otp
+    otp: true

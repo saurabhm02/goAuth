@@ -7,8 +7,9 @@ JWT auth service in Go with multi-project support; for now PostgreSQL only. One 
 **Env** (copy `.env.example` → `.env`):
 
 - **PORT** (default `8080`) · **JWT_SECRET** · **DATABASE_DSN** (Postgres URL for project `default`) · **CONFIG_PATH** (optional)
+- When any project has **otp: true**: **SMTP_HOST**, **SMTP_PORT**, **SMTP_USER**, **SMTP_PASSWORD**, **SMTP_FROM**
 
-**config.yaml** — projects and optional DSN override (else uses `DATABASE_DSN`):
+**config.yaml** — projects, optional DSN override, and optional OTP:
 
 ```yaml
 projects:
@@ -16,9 +17,15 @@ projects:
     database:
       dsn: ""
       user_table: users
+      otp_table: otp  
+    otp: false         # set true to enable OTP (email); requires SMTP_* env
 ```
 
+When `otp: true`: signup sends OTP to email; login can use password or `use_otp: true` (then verify-otp to get token). Set **SMTP_HOST**, **SMTP_PORT**, **SMTP_USER**, **SMTP_PASSWORD**, **SMTP_FROM** in env.
+
 ## Database
+
+**users** (required):
 
 ```sql
 CREATE TABLE IF NOT EXISTS users (
@@ -34,6 +41,19 @@ CREATE TABLE IF NOT EXISTS users (
 );
 ```
 
+**otp** (only when project has `otp: true`):
+
+```sql
+CREATE TABLE IF NOT EXISTS otp (
+  id        VARCHAR(32) PRIMARY KEY,
+  user_id   VARCHAR(32) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  otp       TEXT NOT NULL,
+  expiry    TIMESTAMPTZ NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_otp_user_id ON otp(user_id);
+CREATE INDEX IF NOT EXISTS idx_otp_expiry ON otp(expiry);
+```
+
 ## Run
 
 ```bash
@@ -45,8 +65,9 @@ go run ./cmd/server
 
 | Method | Path | Body | Description |
 |--------|------|------|-------------|
-| POST | /auth/signup | `{"email","phone","password"}` | Register |
-| POST | /auth/login | `{"email_or_phone","password"}` | Login → `user`, `token`, `expires_in` |
+| POST | /auth/signup | `{"email","phone","password"}` | Register (when OTP: returns `message: "otp_sent"`) |
+| POST | /auth/login | `{"email_or_phone","password"}` or `{"email_or_phone","use_otp":true}` | Login → `user`, `token`, `expires_in` or `message: "otp_sent"` |
+| POST | /auth/verify-otp | `{"email_or_phone","otp"}` | Verify OTP → `user`, `token`, `expires_in` (when project has OTP) |
 | GET | /auth/me | — | Current user (`Authorization: Bearer <token>`) |
 | GET | /health | — | Health check |
 

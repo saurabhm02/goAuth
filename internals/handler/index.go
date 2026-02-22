@@ -1,18 +1,18 @@
-package routes
+package handler
 
 import (
 	"context"
 	"net/http"
 
-	"goAuth/internals/handler"
 	"goAuth/internals/helpers"
 	"goAuth/internals/middlewares"
 
 	"github.com/gorilla/mux"
 )
 
-func NewRouter(authHandler *handler.AuthHandler, projectStore map[string]interface{}, authMiddleware func(http.Handler) http.Handler) *mux.Router {
+func NewRouter(authHandler *AuthHandler, projectStore map[string]interface{}, authMiddleware func(http.Handler) http.Handler) *mux.Router {
 	r := mux.NewRouter()
+	r.Use(middlewares.RequestID)
 	r.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
@@ -23,6 +23,7 @@ func NewRouter(authHandler *handler.AuthHandler, projectStore map[string]interfa
 	auth.Use(middlewares.Project(projectStore))
 	auth.HandleFunc("/signup", authHandler.Signup).Methods(http.MethodPost)
 	auth.HandleFunc("/login", authHandler.Login).Methods(http.MethodPost)
+	auth.HandleFunc("/verify-otp", authHandler.VerifyOTP).Methods(http.MethodPost)
 	auth.Handle("/me", authMiddleware(http.HandlerFunc(authHandler.Me))).Methods(http.MethodGet)
 
 	return r

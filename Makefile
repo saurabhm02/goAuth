@@ -7,7 +7,7 @@ build:
 	go build -o $(BINARY) $(MAIN)
 
 run: build
-	./$(BINARY)
+	(set -a && [ -f .env ] && . ./.env; set +a; ./$(BINARY))
 
 dev:
-	go run $(MAIN)
+	(set -a && [ -f .env ] && . ./.env; set +a; go run $(MAIN))

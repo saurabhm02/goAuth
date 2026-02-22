@@ -1,6 +1,7 @@
 package main
 
 import (
+	"database/sql"
 	"log"
 	"net/http"
 	"os"
@@ -8,8 +9,10 @@ import (
 	"goAuth/internals/config"
 	"goAuth/internals/handler"
 	"goAuth/internals/repository"
-	"goAuth/internals/routes"
 	"goAuth/internals/types"
+	"goAuth/internals/worker"
+
+	_ "github.com/lib/pq"
 )
 
 func main() {
@@ -20,11 +23,13 @@ func main() {
 
 	store := buildProjectStore(cfg)
 
-	router := routes.NewRouter(
+	router := handler.NewRouter(
 		handler.NewAuthHandler(),
 		store,
-		routes.AuthMiddlewareFromProject(),
+		handler.AuthMiddlewareFromProject(),
 	)
+
+	go worker.StartOTPCleanup(store)
 
 	port := os.Getenv(types.EnvPort)
 	if port == "" {
@@ -44,19 +49,33 @@ func configPath() string {
 	return "config.yaml"
 }
 
+func openDB(dsn string) *sql.DB {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		log.Fatalf("open db: %v", err)
+	}
+	if err := db.Ping(); err != nil {
+		log.Fatalf("ping db: %v", err)
+	}
+	return db
+}
+
 func buildProjectStore(cfg *config.Config) map[string]interface{} {
 	store := make(map[string]interface{})
 
 	for projectID, p := range cfg.Projects {
 		proj := new(config.ProjectConfig)
 		*proj = p
+		db := openDB(proj.Database.DSN)
 
-		repo, err := repository.NewPostgresUserRepository(proj)
-		if err != nil {
-			log.Fatalf("project %s: %v", projectID, err)
+		repo := repository.NewPostgresUserRepository(db, proj.Database.UserTable)
+		pc := &types.ProjectContext{Repo: repo, OTP: p.OTP}
+
+		if p.OTP {
+			otpRepo := repository.NewPostgresOTPRepository(db, proj.Database.OtpTable)
+			pc.OTPRepo = otpRepo
 		}
-
-		store[projectID] = &types.ProjectContext{Repo: repo}
+		store[projectID] = pc
 	}
 
 	return store

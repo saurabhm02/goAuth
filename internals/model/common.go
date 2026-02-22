@@ -9,6 +9,12 @@ type SignupRequest struct {
 type LoginRequest struct {
 	EmailOrPhone string `json:"email_or_phone"`
 	Password     string `json:"password"`
+	UseOTP       bool   `json:"use_otp"`
+}
+
+type VerifyOTPRequest struct {
+	EmailOrPhone string `json:"email_or_phone"`
+	OTP          string `json:"otp"`
 }
 
 type ForgotPasswordRequest struct {
