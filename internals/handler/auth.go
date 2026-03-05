@@ -188,6 +188,25 @@ func (h *AuthHandler) VerifyOTP(w http.ResponseWriter, r *http.Request) {
 	}})
 }
 
+func (h *AuthHandler) VerifyToken(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims := middlewares.GetClaims(ctx)
+
+	if claims == nil || claims.UserID == "" {
+		logger.Logf(ctx, "verify_token", "-", "unauthorized access")
+		helpers.WriteError(w, http.StatusUnauthorized, types.MsgUnauthorized)
+		return
+	}
+
+	logger.Logf(ctx, "verify_token", claims.UserID, "token successfully verified")
+	helpers.WriteJSON(w, http.StatusOK, model.DataResponse{
+		Data: map[string]interface{}{
+			"user_id": claims.UserID,
+		},
+	})
+}
+
+
 func (h *AuthHandler) Me(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 
